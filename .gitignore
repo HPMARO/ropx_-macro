@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.pyc
+build/
+dist/
+dist-small-windows/
+dist-auto-chase/
+*.spec
+runtime-data/
+/실행화면.png
