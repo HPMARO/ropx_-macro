@@ -9,7 +9,7 @@ if (-not (Test-Path -LiteralPath $taskPython)) {
 if ($LASTEXITCODE -ne 0) { throw 'Dependency installation failed' }
 & $taskPython -m unittest discover -s tests -v
 if ($LASTEXITCODE -ne 0) { throw 'Tests failed' }
-& $taskPython -m PyInstaller --noconfirm --windowed --onedir --distpath dist-auto-chase --name SlimeAssistant run.py
+& $taskPython -m PyInstaller --noconfirm --windowed --onedir --distpath dist-visible-follow --name SlimeAssistant run.py
 if ($LASTEXITCODE -ne 0) { throw 'Build failed' }
-Get-ChildItem -LiteralPath $PSScriptRoot -Filter '*.txt' | Where-Object Name -ne 'requirements.txt' | Copy-Item -Destination '.\dist-auto-chase\SlimeAssistant'
-Compress-Archive -Path '.\dist-auto-chase\SlimeAssistant' -DestinationPath '.\dist-auto-chase\SlimeAssistant-AutoChase.zip' -Force
+Get-ChildItem -LiteralPath $PSScriptRoot -Filter '*.txt' | Where-Object Name -ne 'requirements.txt' | Copy-Item -Destination '.\dist-visible-follow\SlimeAssistant'
+Compress-Archive -Path '.\dist-visible-follow\SlimeAssistant' -DestinationPath '.\dist-visible-follow\SlimeAssistant-VisibleFollow.zip' -Force

@@ -103,7 +103,7 @@ class CropDialog(tk.Toplevel):
 class App:
     def __init__(self, root):
         self.root = root
-        root.title('Slime Assistant — 다계정 자동 추적·복구')
+        root.title('Slime Assistant — 보이는 슬라임 따라가기')
         root.geometry('1160x850')
         root.minsize(1000, 720)
         root.protocol('WM_DELETE_WINDOW', self.close)
@@ -135,7 +135,8 @@ class App:
         self.approach = tk.BooleanVar(value=True)
         self.auto_recover = tk.BooleanVar(value=True)
         self.scan = tk.BooleanVar(value=False)
-        self.right_aim = tk.BooleanVar(value=True)
+        self.right_aim = tk.BooleanVar(value=False)
+        self.camera_mode = tk.StringVar(value='1인칭 (권장)')
         self.status = tk.StringVar(value='정지 — 창 선택 → 기준 이미지 등록 → 감지 전용으로 확인')
         self.detail = tk.StringVar(value='슬라임 종류마다 근거리·중거리 이미지를 여러 장 등록하면 인식에 도움이 됩니다.')
         self.build_ui()
@@ -149,7 +150,7 @@ class App:
         outer = ttk.Frame(self.root, padding=12)
         outer.pack(fill='both', expand=True)
         ttk.Label(outer, text='SLIME ASSISTANT', font=('Segoe UI', 20, 'bold')).pack(anchor='w')
-        ttk.Label(outer, text='사냥 모드는 몹 추적·접근·공격과 가림 복구를 수행합니다. 실제 화면·마우스·키보드를 사용합니다.',
+        ttk.Label(outer, text='보이는 슬라임 중 조준점 가까운 대상을 따라갑니다. 1인칭 권장 · 게임 안의 시점은 직접 맞추세요.',
                   foreground='#9b4200').pack(anchor='w', pady=(2, 10))
         upper = ttk.Frame(outer)
         upper.pack(fill='x')
@@ -193,7 +194,10 @@ class App:
         row.pack(fill='x', pady=(8, 0))
         ttk.Checkbutton(row, text='몹 추적·접근 W', variable=self.approach).pack(side='left')
         ttk.Checkbutton(row, text='미감지 시 회전 탐색 (실험)', variable=self.scan).pack(side='left', padx=8)
-        ttk.Checkbutton(row, text='우클릭 시점 조정', variable=self.right_aim).pack(side='left')
+        camera = ttk.Combobox(row, textvariable=self.camera_mode,
+                             values=['1인칭 (권장)', '3인칭 (우클릭 회전)'], state='readonly', width=21)
+        camera.pack(side='left')
+        camera.bind('<<ComboboxSelected>>', self.camera_changed)
         ttk.Checkbutton(row, text='시작 시 도우미 최소화', variable=self.minimize_monitor).pack(side='left', padx=6)
         row = ttk.Frame(controls)
         row.pack(fill='x', pady=(5, 0))
@@ -221,6 +225,9 @@ class App:
             self.logs.delete('1.0', '100.0')
         self.logs.see('end')
         self.logs.config(state='disabled')
+
+    def camera_changed(self, event=None):
+        self.right_aim.set(self.camera_mode.get().startswith('3인칭'))
 
     def refresh_windows(self):
         if self.running:
@@ -491,6 +498,7 @@ class App:
                 'near': float(self.near.get()), 'gain': float(self.gain.get()), 'interval': float(self.interval.get()),
                 'chase_enabled': self.approach.get(), 'auto_recover': self.auto_recover.get(),
                 'scan': self.scan.get(), 'right_aim': self.right_aim.get(),
+                'camera_mode': 'third_person' if self.right_aim.get() else 'first_person',
                 'minimize_monitor': self.minimize_monitor.get()}
 
     def save_settings(self):
@@ -517,10 +525,14 @@ class App:
                 if isinstance(value, (float, int)):
                     variable.set(value)
             for key, variable in [('chase_enabled', self.approach), ('auto_recover', self.auto_recover),
-                                  ('scan', self.scan), ('right_aim', self.right_aim),
+                                  ('scan', self.scan),
                                   ('minimize_monitor', self.minimize_monitor)]:
                 if isinstance(data.get(key), bool):
                     variable.set(data[key])
+            # Older versions enabled right-click by default. A missing explicit
+            # camera profile now migrates to the requested first-person default.
+            self.camera_mode.set('3인칭 (우클릭 회전)' if data.get('camera_mode') == 'third_person' else '1인칭 (권장)')
+            self.camera_changed()
             # Never persist an armed state or automatically reuse window handles.
         except Exception as exc:
             self.log(f'이전 설정을 읽지 못했습니다: {exc}')

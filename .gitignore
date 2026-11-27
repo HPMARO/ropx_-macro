@@ -5,6 +5,7 @@ build/
 dist/
 dist-small-windows/
 dist-auto-chase/
+dist-visible-follow/
 *.spec
 runtime-data/
 /실행화면.png

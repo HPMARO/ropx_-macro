@@ -47,6 +47,23 @@ class VisionTests(unittest.TestCase):
         self.assertEqual((None, 0), tracker.update([], (400, 600, 3)))
         self.assertEqual(1, tracker.update([a], (400, 600, 3))[1])
 
+    def test_current_center_target_wins_over_previous_side_target(self):
+        tracker = Tracker()
+        side = Detection(450, 160, 50, 40, .99, 'slime')
+        center = Detection(275, 180, 50, 40, .98, 'slime')
+        tracker.update([side], (400, 600, 3))
+        selected, hits = tracker.update([side, center], (400, 600, 3))
+        self.assertIs(center, selected)
+        self.assertEqual(1, hits)
+
+    def test_switching_visible_slime_restarts_confirmation(self):
+        tracker = Tracker()
+        a = Detection(275, 180, 50, 40, .99, 'blue')
+        b = Detection(275, 180, 50, 40, .99, 'green')
+        for _ in range(3):
+            tracker.update([a], (400, 600, 3))
+        self.assertEqual(1, tracker.update([b], (400, 600, 3))[1])
+
 
 class InputTests(unittest.TestCase):
     # All input primitives are mocked. These tests never click or type on the PC.
@@ -199,6 +216,9 @@ class EngineTests(unittest.TestCase):
 
 
 class ChaseTests(unittest.TestCase):
+    def test_first_person_is_default_without_right_button(self):
+        self.assertFalse(Options((), ()).right_aim)
+
     def test_turn_then_approach_then_attack_and_stop_on_loss(self):
         engine = Engine(queue.Queue())
         engine.options = Options((), (), hunting=True)

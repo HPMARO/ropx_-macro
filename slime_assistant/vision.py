@@ -123,8 +123,10 @@ class Tracker:
             self.reset()
             return None, 0
         h, w = shape[:2]
-        anchor = self.last.center if self.last else (w / 2, h / 2)
-        target = min(detections, key=lambda d: math.dist(d.center, anchor) / max(w, h) - .25 * d.score)
+        # Choose from the current image; previous identity does not own the target.
+        # History only confirms stability before inputs are allowed.
+        anchor = (w / 2, h / 2)
+        target = min(detections, key=lambda d: math.dist(d.center, anchor) / max(w, h) - .10 * d.score)
         same = self.last and self.last.label == target.label and math.dist(self.last.center, target.center) < max(w, h) * .15
         self.hits = self.hits + 1 if same else 1
         self.last = target

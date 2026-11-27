@@ -22,7 +22,7 @@ class Options:
     poll_interval: float = .25
     auto_approach: bool = True
     auto_scan: bool = False
-    right_aim: bool = True
+    right_aim: bool = False
     near_ratio: float = .16
     camera_gain: float = .20
     attack_interval: float = .65
@@ -208,13 +208,13 @@ class Engine:
                                     kind = action[0]
                                     if kind in ('aim', 'scan'):
                                         driver.aim(window.hwnd, *action[1:], o.right_aim)
-                                        state['tracker'].reset()
+                                        if kind == 'scan':
+                                            state['tracker'].reset()
                                         if kind == 'scan':
                                             state['scan_time'] = time.monotonic()
                                         phase = '방향 조정' if kind == 'aim' else '회전 탐색'
                                     elif kind == 'walk':
                                         driver.walk_pulse(window.hwnd, self.stop_event)
-                                        state['tracker'].reset()
                                         phase = '몹에게 접근'
                                     else:
                                         if driver.attack(window.hwnd):
